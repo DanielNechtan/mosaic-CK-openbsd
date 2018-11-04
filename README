@@ -1,4 +1,4 @@
-Fork of Cameron Kaiser's NCSA Mosaic 2.7 with his own patches and MachTen support.
+Fork of Cameron Kaiser's NCSA Mosaic 2.7ck11 with his own patches and MachTen support.
 
 This code is seriously outdated - use at your own risk.  I've removed the remaining gets() calls and updated libpng so it will build but it needs a proper audit.
 
