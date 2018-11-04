@@ -1,3 +1,14 @@
+Fork of Cameron Kaiser's NCSA Mosaic 2.7 with his own patches and MachTen support.
+
+This code is seriously outdated - use at your own risk.  I've removed the remaining gets() calls and updated libpng so it will build but it needs a proper audit.
+
+It may be worth merging this with the tree at https://github.com/0x16h/ncsa-mosaic
+
+$ git clone https://github.com/0x16h/mosaic-CK-openbsd
+$ cd mosaic-CK-openbsd && make openbsd
+$ src/Mosaic gopher://gopher.club
+
+
 ***** THIS IS MOSAIC 2.7ck8 *****
 This is a hacked version of Mosaic 2.7b5 adjusted for my own personal use and
 to function decently well in today's WWW environment. It is not supported
