@@ -100,7 +100,7 @@ extern unsigned int HTCardinal PARAMS((int *pstatus,
 
 extern WWW_CONST char * HTHostName NOPARAMS;
 
-extern int HTDoConnect (char *, char *, int, int *);
+extern int HTDoConnect (char *, char *, int, int *, int);
 
 extern int HTDoRead (int, void *, unsigned);
 

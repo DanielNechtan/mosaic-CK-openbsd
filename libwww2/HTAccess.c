@@ -94,7 +94,7 @@ PUBLIC BOOL HTRegisterProtocol(protocol)
 */
 PRIVATE void HTAccessInit NOARGS			/* Call me once */
 {
-extern HTProtocol HTTP, HTFile, HTTelnet, HTTn3270, HTRlogin;
+extern HTProtocol HTTPS, HTFile, HTTelnet, HTTn3270, HTRlogin;
 extern HTProtocol HTFTP, HTNews, HTGopher, HTMailto, HTNNTP;
 #ifdef DIRECT_WAIS
 extern HTProtocol HTWAIS;
@@ -106,7 +106,8 @@ extern HTProtocol HTWAIS;
     HTRegisterProtocol(&HTWAIS);
 #endif
 
-    HTRegisterProtocol(&HTTP);
+//    HTRegisterProtocol(&HTTP);
+    HTRegisterProtocol(&HTTPS);
     HTRegisterProtocol(&HTFile);
     HTRegisterProtocol(&HTTelnet);
     HTRegisterProtocol(&HTTn3270);

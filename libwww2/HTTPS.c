@@ -1,8 +1,8 @@
-/*	HyperText Tranfer Protocol	- Client implementation		HTTP.c
+/*	HyperText Tranfer Protocol w/TLS	- Client implementation		HTTPS.c
 **	==========================
 */
 #include "../config.h"
-#include "HTTP.h"
+#include "HTTPS.h"
 
 #define HTTP_VERSION	"HTTP/1.0"
 
@@ -75,7 +75,7 @@ extern char *proxy_host_fix;  /* for the Host: header */
 extern BOOL using_proxy;      /* are we using an HTTP proxy gateway? */
 PUBLIC BOOL reloading = NO;   /* did someone say, "RELOAD!?!?!" swp */
 
-/*		Load Document from HTTP Server			HTLoadHTTP()
+/*		Load Document from HTTP Server			HTLoadHTTPS()
 **		==============================
 **
 **	Given a hypertext address, this routine loads a document.
@@ -97,7 +97,7 @@ PUBLIC BOOL reloading = NO;   /* did someone say, "RELOAD!?!?!" swp */
 static int lsocket = -1;
 static char *addr = NULL;
 
-PUBLIC int HTLoadHTTP ARGS4 (
+PUBLIC int HTLoadHTTPS ARGS4 (
 	char *, 		arg,
 	HTParentAnchor *,	anAnchor,
 	HTFormat,		format_out,
@@ -220,7 +220,7 @@ PUBLIC int HTLoadHTTP ARGS4 (
 	}
 
   if (!keepingalive) {
-      status = HTDoConnect (arg, "HTTP", TCP_PORT, &s, TLS);
+      status = HTDoConnect (arg, "HTTPS", TCPTLS_PORT, &s, TLS);
       if (status == HT_INTERRUPTED){
 	  /* Interrupt cleanly. */
 #ifndef DISABLE_TRACE
@@ -270,7 +270,7 @@ fixed for HTTP proxies -- ck
         strcat(command, p1+1);
 /*
 	strcat(command, arg);
-	strcat(command, "http:");
+	strcat(command, "https:");
 	strcat(command, p1);
 */
     }
@@ -449,7 +449,7 @@ fixed for HTTP proxies -- ck
             *(colon++) = '\0';	/* Chop off port number */
             portnumber = atoi(colon);
           }
-        else portnumber = 80;
+        else portnumber = 443;
         
         if (NULL!=(auth=HTAA_composeAuth(hostname, portnumber, docname))) 
           {
@@ -1078,7 +1078,7 @@ fixed for HTTP proxies -- ck
 /*	Protocol descriptor
 */
 
-PUBLIC HTProtocol HTTP = { "http", HTLoadHTTP, 0 };
+PUBLIC HTProtocol HTTPS = { "https", HTLoadHTTPS, 0 };
 
 
 

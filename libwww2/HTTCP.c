@@ -344,7 +344,7 @@ struct in_addr SOCKS_ftpsrv;
 #endif
 
 
-PUBLIC int HTDoConnect (char *url, char *protocol, int default_port, int *s)
+PUBLIC int HTDoConnect (char *url, char *protocol, int default_port, int *s, int etls)
 {
   struct sockaddr_in soc_address;
   struct sockaddr_in *sin = &soc_address;
@@ -569,6 +569,12 @@ PUBLIC int HTDoConnect (char *url, char *protocol, int default_port, int *s)
 
   return status;
 #endif /* #ifdef SOCKS */
+
+if (etls == 1) {
+	fprintf(stderr,"\n\nTLS reached\n\n");
+
+}
+
 }
 
 /* This is so interruptible reads can be implemented cleanly. */

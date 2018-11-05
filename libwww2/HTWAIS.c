@@ -632,7 +632,7 @@ static int fd_mosaic_connect_to_server(char *host_name, long port, long *fd)
 
   sprintf (dummy, "wais://%s:%d/", host_name, port);
 
-  status = HTDoConnect (dummy, "WAIS", 210, (int *)fd);
+  status = HTDoConnect (dummy, "WAIS", 210, (int *)fd, TLS);
   if (status == HT_INTERRUPTED)
     {
 #ifndef DISABLE_TRACE

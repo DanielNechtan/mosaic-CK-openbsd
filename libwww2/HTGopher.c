@@ -781,7 +781,7 @@ PUBLIC int HTLoadGopher ARGS4(
 #endif
   }
 
-  status = HTDoConnect (arg, "Gopher", 70, &s);
+  status = HTDoConnect (arg, "Gopher", 70, &s, TLS);
   if (status == HT_INTERRUPTED)
     {
       /* Interrupt cleanly. */

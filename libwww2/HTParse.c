@@ -207,6 +207,7 @@ char * HTParse(aName, relatedName, wanted)
             if (p && access) 
               {		/* Port specified */
                 if ((strcmp(access, "http") == 0 && strcmp(p, ":80") == 0) ||
+		   (strcmp(access, "https") == 0 && strcmp(p, ":443") == 0) ||
                     (strcmp(access, "gopher") == 0 && 
                      (strcmp(p, ":70") == 0 ||
                       strcmp(p, ":70+") == 0)))

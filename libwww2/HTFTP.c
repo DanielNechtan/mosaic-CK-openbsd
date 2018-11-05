@@ -663,7 +663,7 @@ redialFTP:
 	fprintf(stderr,"dummy = %s\n",dummy);
 #endif
 
-  status = HTDoConnect (dummy, "FTP", IPPORT_FTP, &con);
+  status = HTDoConnect (dummy, "FTP", IPPORT_FTP, &con, TLS);
   
   if (status < 0)
     {
