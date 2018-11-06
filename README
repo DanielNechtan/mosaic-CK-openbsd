@@ -4,6 +4,8 @@ This code is seriously outdated - use at your own risk.  I've removed the remain
 
 It may be worth merging this with the tree at https://github.com/0x16h/ncsa-mosaic
 
+I started adding initial TLS support but wasn't sure of the best way to do it, then remembered https://www.w3.org/Library/src/SSL/ - may start over, or someone else can at some point using this as a guide.
+
 $ git clone https://github.com/0x16h/mosaic-CK-openbsd
 $ cd mosaic-CK-openbsd && make openbsd
 $ src/Mosaic gopher://gopher.club
