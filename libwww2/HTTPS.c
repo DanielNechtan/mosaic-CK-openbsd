@@ -528,7 +528,10 @@ PUBLIC int HTLoadHTTPS ARGS4 (
   printf("NETWRITES: %s\n", command);
   size_t cmdlen = (size_t)strlen(command);
   status = NETWRITES(ctx, command, cmdlen);
+  printf("\nStatus: %d\n", status);
  /* tls_write(ctx, command, cmdlen); */
+ printf("\nError: %s\n", tls_error(ctx));
+
 #else
   status = NETWRITE(s, command, (int)strlen(command));
 #endif
