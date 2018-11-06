@@ -42,6 +42,10 @@ Default values
 /* Default values of those: */
 #define NETCLOSE close      /* Routine to close a TCP-IP socket         */
 #define NETREAD  HTDoRead       /* Routine to read from a TCP-IP socket     */
+#ifdef TLS
+/* #define NETWRITES HTDoWrite */
+#define NETWRITES tls_write
+#endif
 #define NETWRITE write      /* Routine to write to a TCP-IP socket      */
 
 /* Unless stated otherwise, */
@@ -266,6 +270,11 @@ Defaults
 #include <arpa/inet.h>      /* Must be after netinet/in.h */
 #endif
 #include <netdb.h>
+
+#ifdef __OpenBSD__
+#include <tls.h> /* tls */
+#endif
+
 #endif  /* TCP includes */
 
 

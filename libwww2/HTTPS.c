@@ -33,8 +33,8 @@ extern char **agent;
 
 #ifndef DISABLE_TRACE
 /* new logging stuff */
-int httpTrace=0;
-int www2Trace=0;
+int httpTrace=1;
+int www2Trace=1;
 #endif
 
 char **extra_headers=NULL;
@@ -104,6 +104,7 @@ PUBLIC int HTLoadHTTPS ARGS4 (
 	HTStream*,		sink)
 {
   int s;				/* Socket number for returned data */
+  struct tls *ctx;
   char *command;			/* The whole command */
   char *eol;			/* End of line if found */
   char *start_of_data;		/* Start of body of reply */
@@ -181,7 +182,12 @@ PUBLIC int HTLoadHTTPS ARGS4 (
 
 	if((lsocket != -1) && i && addr && !strncmp(addr,arg,i)){
 		/* keepalive is active and addresses match -- try the old socket */
+	#ifdef TLS
+		/* ctx */
 		s = lsocket;
+	#else
+		s = lsocket;
+	#endif
 		keepingalive = 1; /* flag in case of network error due to server timeout*/ 
 		lsocket = -1; /* prevent looping on failure */
 #ifndef DISABLE_TRACE
@@ -263,8 +269,7 @@ PUBLIC int HTLoadHTTPS ARGS4 (
 
     /*
      * For a gateway, the beginning '/' on the request must
-     * be stripped before appending to the gateway address.
-fixed for HTTP proxies -- ck
+     * be stripped before appending to the gateway address. fixed for HTTP proxies -- ck
      */
     if ((using_gateway)||(using_proxy)) {
         strcat(command, p1+1);
@@ -519,7 +524,14 @@ fixed for HTTP proxies -- ck
   HTProgress ("Sending HTTP request.");
 */
 
+#ifdef TLS
+  printf("NETWRITES: %s\n", command);
+  size_t cmdlen = (size_t)strlen(command);
+  status = NETWRITES(ctx, command, cmdlen);
+ /* tls_write(ctx, command, cmdlen); */
+#else
   status = NETWRITE(s, command, (int)strlen(command));
+#endif
   if (do_post && do_put) {
       char buf[BUFSIZ];
       int upcnt=0,n;

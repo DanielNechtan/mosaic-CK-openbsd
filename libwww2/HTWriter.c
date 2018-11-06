@@ -10,7 +10,7 @@
 #include "HTUtils.h"
 #include "tcp.h"
 #include <stdio.h>
-
+        struct tls *ctx;
 char adbuf[1024];
 
 #ifndef DISABLE_TRACE
@@ -26,6 +26,7 @@ struct _HTStream {
 	WWW_CONST HTStreamClass *	isa;
 
 	int	soc;
+	struct tls *ctx;
 	char	*write_pointer;
 	char 	buffer[BUFFER_SIZE];
 };
@@ -42,8 +43,14 @@ PRIVATE void flush ARGS1(HTStream *, me)
 
     while (read_pointer < write_pointer) {
         int status;
+#ifdef TLS
+        status = NETWRITES(ctx, me->buffer,
+                        write_pointer - read_pointer);
+#else
+
 	status = NETWRITE(me->soc, me->buffer,
 			write_pointer - read_pointer);
+#endif
 
 #ifndef DISABLE_TRACE
 	if (httpTrace) {
@@ -109,8 +116,13 @@ PRIVATE void HTWriter_write ARGS3(HTStream *, me, WWW_CONST char*, s, int, l)
     flush(me);		/* First get rid of our buffer */
 
     while (read_pointer < write_pointer) {
+#ifdef TLS
+        int status = NETWRITES(ctx, read_pointer,
+                        write_pointer - read_pointer);
+#else
         int status = NETWRITE(me->soc, read_pointer,
 			write_pointer - read_pointer);
+#endif
 
 #ifndef DISABLE_TRACE
 	if (httpTrace) {

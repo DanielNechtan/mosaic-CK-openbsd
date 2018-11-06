@@ -1174,7 +1174,8 @@ char *mo_convert_newlines_to_spaces (char *str)
   if (tptr != str)
   {
 /*	bcopy(tptr, str, (strlen(tptr) + 1));*/
-	memcpy(str, tptr, (strlen(tptr) + 1));
+/*	memcpy(str, tptr, (strlen(tptr) + 1)); */
+	memmove(str, tptr, (strlen(tptr) + 1));
   }
 
   return str;

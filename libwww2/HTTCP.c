@@ -20,6 +20,9 @@
 #include "HTAlert.h"
 #include "HTAccess.h"
 #include "tcp.h"		/* Defines SHORT_NAMES if necessary */
+#ifdef __OpenBSD__
+#include <tls.h>
+#endif
 #ifdef SHORT_NAMES
 #define HTInetStatus		HTInStat
 #define HTInetString 		HTInStri
@@ -46,6 +49,14 @@
 #ifndef DISABLE_TRACE
 extern int httpTrace;
 extern int www2Trace;
+#endif
+
+#ifdef __OpenBSD__
+#define DEFAULT_CA_FILE "/etc/ssl/cert.pem"
+
+struct tls_config *tlscfg;
+struct tls *ctx;
+char *myhost = NULL;
 #endif
 
 /*	Module-Wide variables
@@ -100,7 +111,64 @@ PUBLIC int HTInetStatus(where)
     return -1;
 }
 
+#ifdef __OpenBSD__
+void
+report_tls(struct tls * tls_ctx, char * host)
+{
+	time_t t;
+	const char *ocsp_url;
 
+	fprintf(stderr, "TLS handshake negotiated %s/%s with host %s\n",
+	    tls_conn_version(tls_ctx), tls_conn_cipher(tls_ctx), host);
+	fprintf(stderr, "Peer name: %s\n", host);
+	if (tls_peer_cert_subject(tls_ctx))
+		fprintf(stderr, "Subject: %s\n",
+		    tls_peer_cert_subject(tls_ctx));
+	if (tls_peer_cert_issuer(tls_ctx))
+		fprintf(stderr, "Issuer: %s\n",
+		    tls_peer_cert_issuer(tls_ctx));
+	if ((t = tls_peer_cert_notbefore(tls_ctx)) != -1)
+		fprintf(stderr, "Valid From: %s", ctime(&t));
+	if ((t = tls_peer_cert_notafter(tls_ctx)) != -1)
+		fprintf(stderr, "Valid Until: %s", ctime(&t));
+	if (tls_peer_cert_hash(tls_ctx))
+		fprintf(stderr, "Cert Hash: %s\n",
+		    tls_peer_cert_hash(tls_ctx));
+	ocsp_url = tls_peer_ocsp_url(tls_ctx);
+	if (ocsp_url != NULL)
+		fprintf(stderr, "OCSP URL: %s\n", ocsp_url);
+	switch (tls_peer_ocsp_response_status(tls_ctx)) {
+	case TLS_OCSP_RESPONSE_SUCCESSFUL:
+		fprintf(stderr, "OCSP Stapling: %s\n",
+		    tls_peer_ocsp_result(tls_ctx) == NULL ?  "" :
+		    tls_peer_ocsp_result(tls_ctx));
+		fprintf(stderr,
+		    "  response_status=%d cert_status=%d crl_reason=%d\n",
+		    tls_peer_ocsp_response_status(tls_ctx),
+		    tls_peer_ocsp_cert_status(tls_ctx),
+		    tls_peer_ocsp_crl_reason(tls_ctx));
+		t = tls_peer_ocsp_this_update(tls_ctx);
+		fprintf(stderr, "  this update: %s",
+		    t != -1 ? ctime(&t) : "\n");
+		t =  tls_peer_ocsp_next_update(tls_ctx);
+		fprintf(stderr, "  next update: %s",
+		    t != -1 ? ctime(&t) : "\n");
+		t =  tls_peer_ocsp_revocation_time(tls_ctx);
+		fprintf(stderr, "  revocation: %s",
+		    t != -1 ? ctime(&t) : "\n");
+		break;
+	case -1:
+		break;
+	default:
+		fprintf(stderr, "OCSP Stapling:  failure - response_status %d (%s)\n",
+		    tls_peer_ocsp_response_status(tls_ctx),
+		    tls_peer_ocsp_result(tls_ctx) == NULL ?  "" :
+		    tls_peer_ocsp_result(tls_ctx));
+		break;
+
+	}
+}
+#endif
 /*	Parse a cardinal value				       parse_cardinal()
 **	----------------------
 **
@@ -136,8 +204,37 @@ PUBLIC unsigned int HTCardinal ARGS3
 
     return n;
 }
+#ifdef __OpenBSD__
+int libtls_init()
+{
+        if (tlscfg != NULL)
+                return 0;
 
+        if (tls_init() == -1) {
+                warn("tls_init");
+                goto err;
+        }
 
+        tlscfg = tls_config_new();
+        if (tlscfg == NULL) {
+                warn("tls_config_new");
+                goto err;
+        }
+
+        if (tls_config_set_ca_file(tlscfg, DEFAULT_CA_FILE) == -1) {
+                warn("tls_config_set_ca_file: %s", tls_config_error(tlscfg));
+                goto err;
+        }
+
+        return 0;
+
+ err:
+        tls_config_free(tlscfg);
+        tlscfg = NULL;
+
+        return -1;
+}
+#endif
 /*	Produce a string for an Internet address
 **	----------------------------------------
 **
@@ -214,6 +311,7 @@ PUBLIC int HTParseInet ARGS2(SockA *,sin, WWW_CONST char *,str)
   else 
     {		    /* Alphanumeric node name: */
 /* strcasecmp() much more efficient! -- CK */
+      myhost = host;
       if (cached_host && (strcasecmp (cached_host, host) == 0))
         {
 #if 0
@@ -349,6 +447,7 @@ PUBLIC int HTDoConnect (char *url, char *protocol, int default_port, int *s, int
   struct sockaddr_in soc_address;
   struct sockaddr_in *sin = &soc_address;
   int status;
+  int i;
 
   /* Set up defaults: */
   sin->sin_family = AF_INET;
@@ -567,23 +666,61 @@ PUBLIC int HTDoConnect (char *url, char *protocol, int default_port, int *s, int
 	close(*s);
     }
 
-  return status;
-#endif /* #ifdef SOCKS */
-
-if (etls == 1) {
-	fprintf(stderr,"\n\nTLS reached\n\n");
-
+if (TLS==1) {
+#ifdef __OpenBSD__
+        printf("\n##### TLS start #####\n");
+        libtls_init();
+	if ((ctx = tls_client()) == NULL) {
+                printf("tls_client() failure");
+        } else if (tls_configure(ctx, tlscfg) == -1) {
+                sprintf("%s: tls_configure: %s",
+                        hostname, tls_error(ctx));
+                printf("tls_configure() failed");
+        }
+        if (tls_connect_socket(ctx, *s, "cryogenix.net") != 0) {
+                sprintf("%s: tls_connect_socket: %s, %s", "cryogenix.net",
+                    "cryogenix.net", tls_error(ctx));
+		printf("tls_connect_socket failed");
+        }
+        do {
+                if ((i = tls_handshake(ctx)) == -1)
+                        sprintf("tls handshake failed (%s)",
+                            tls_error(ctx));
+        } while (i == TLS_WANT_POLLIN || i == TLS_WANT_POLLOUT);
+	report_tls(ctx, "cryogenix.net");
+#else
+	printf("TLS not available");
+#endif
 }
+#ifdef TLS
+	   /* return ctx; */
+	return status; 
+#else
+  return status;
+#endif
+
+#endif /* #ifdef SOCKS */
 
 }
 
 /* This is so interruptible reads can be implemented cleanly. */
+/* int HTDoWrite (int fildes, void *buf, unsigned nbyte) */
+/* ctx, command, cmdlen */
+int HTDoWrite (struct tls * ctx, const void *buf, size_t sz)
+{
+ssize_t	r;
+r = tls_write(ctx, buf, sz);
+return r;
+}
+
 int HTDoRead (int fildes, void *buf, unsigned nbyte)
 {
   int ready, ret, intr;
   fd_set readfds;
   struct timeval timeout;
   char *adtestbuf;
+  size_t maxread;
+  ssize_t r, rc;
 
   ready = 0;
   while (!ready)
@@ -620,7 +757,34 @@ int HTDoRead (int fildes, void *buf, unsigned nbyte)
           }
     }
 
+if (TLS==1) {
+#ifdef __OpenBSD__
+/*
+maxread = sizeof(buf) - 1;
+	while ((ret != 0) && rc < maxread) {
+		ret = tls_read(ctx, buf + rc, maxread - rc);
+		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
+			continue;
+		if (ret < 0) {
+			sprintf("tls_read failed (%s)", tls_error(tls_ctx));
+			printf("tls_read() failed");
+		} else
+			rc += ret;
+	}
+*/
+
+ret = tls_read(ctx, buf, nbyte);
+adtestbuf = buf;
+for (intr = 0; intr < ret; fprintf(stderr,"%c",adtestbuf[intr++]) ) ;
+
+if (ret < 0) {
+                   /*     fprintf("tls_read failed (%s)", tls_error(ctx)); */
+                        printf("tls_read() failed %s", tls_error(ctx));
+}
+#endif
+}else {
   ret = read (fildes, buf, nbyte);
+}
 
 #ifndef DISABLE_TRACE
   if (httpTrace) {

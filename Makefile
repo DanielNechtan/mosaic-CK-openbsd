@@ -233,9 +233,9 @@ q_sun-lresolv: rm_and_touch
 
 clean:
 	cd libXmx; $(MAKE) clean
-	cd libdtm; $(MAKE) clean
+#	cd libdtm; $(MAKE) clean
 	cd libhtmlw; $(MAKE) clean
-	cd libnet; $(MAKE) clean
+#	cd libnet; $(MAKE) clean
 	cd libnut; $(MAKE) clean
 	cd libwww2; $(MAKE) clean
 	cd src; $(MAKE) clean MOSAIC="Mosaic"

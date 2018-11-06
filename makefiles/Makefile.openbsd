@@ -61,7 +61,7 @@ sysconfigflags = -DMOTIF1_2 -D__OpenBSD__
 #### For Motorola SVR4:
 # syslibs = -lnsl -lsocket -lgen
 
-syslibs = -lc
+syslibs = -lc -ltls -lssl -lcrypto
 
 #### X include file locations -- if your platform puts the X include
 #### files in a strange place, set this variable appropriately.  Else
