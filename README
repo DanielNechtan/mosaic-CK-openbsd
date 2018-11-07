@@ -1,10 +1,13 @@
 Fork of Cameron Kaiser's NCSA Mosaic 2.7ck11 with his own patches and MachTen support.
 
-This code is seriously outdated - use at your own risk.  I've removed the remaining gets() calls and updated libpng so it will build but it needs a proper audit.
+This code is seriously outdated - use at your own risk.  I've removed the remaining gets() calls and 
+updated libpng so it will build but it needs a proper audit.
 
 It may be worth merging this with the tree at https://github.com/0x16h/ncsa-mosaic
 
-I started adding initial TLS support but wasn't sure of the best way to do it, then remembered https://www.w3.org/Library/src/SSL/ - may start over, or someone else can at some point using this as a guide.
+I started adding initial TLS support (OpenBSD libtls) but wasn't sure of the best way to integrate it
+other than introducing a new protocol based on HTTP.c, then remembered https://www.w3.org/Library/src/SSL/
+- may start over, or someone else can at some point using this as a guide.
 
 $ git clone https://github.com/0x16h/mosaic-CK-openbsd
 $ cd mosaic-CK-openbsd && make openbsd
